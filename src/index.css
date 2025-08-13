@@ -1,3 +1,69 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* .fade-in {
+  animation: fadeIn 1s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+} */
+
+/* Adjust Leaflet ZoomControl position */
+.custom-map-container .leaflet-bottom.leaflet-right .leaflet-control-zoom {
+  margin-bottom: 0px; /* move it up */
+  margin-right: 140px;
+}
+
+
+/* 🌐 Same Scrollbar for ALL Screens */
+.location-scroll-panel {
+  overflow-y: scroll; /* Always show vertical scrollbar */
+  scrollbar-width: auto; /* Firefox */
+  scrollbar-color: #646464 rgba(255, 255, 255, 0.1);
+}
+
+/* Chrome, Safari, Edge */
+.location-scroll-panel::-webkit-scrollbar {
+  width: 12px; /* Same width as desktop */
+}
+
+.location-scroll-panel::-webkit-scrollbar-track {
+  background: rgba(163, 162, 162, 0.1); /* Light gray track */
+}
+
+.location-scroll-panel::-webkit-scrollbar-thumb {
+  background: #ffffff; /* Bright white thumb */
+  border-radius: 8px;
+}
+
+@media (max-width: 639px) and (orientation: landscape) {
+  .mobile-landscape-panel {
+    width: 55vw !important;
+    max-width: 180px !important;
+  }
+}
+
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.3s ease-in-out;
+}

@@ -12,8 +12,13 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-export default function Sidebar({ activeTab, setActiveTab, contentRef }) {
-  const [isOpen, setIsOpen] = useState(true);
+export default function Sidebar({
+  activeTab,
+  setActiveTab,
+  contentRef,
+  isOpen,
+  toggleOpen,
+}) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -27,80 +32,73 @@ export default function Sidebar({ activeTab, setActiveTab, contentRef }) {
     { icon: <Maximize2 />, label: "Preview" },
   ];
 
-  const toggleOpen = () => setIsOpen((prev) => !prev);
-
   const enterFullscreen = async () => {
     if (contentRef?.current?.requestFullscreen) {
       await contentRef.current.requestFullscreen();
       setIsFullscreen(true);
-      setIsOpen(true); // ✅ Keep sidebar open in fullscreen
     }
   };
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     const handleFullscreenChange = () => {
-      const full = !!document.fullscreenElement;
-      setIsFullscreen(full);
-      if (!full) setIsOpen(window.innerWidth >= 640); // Restore based on screen size
+      setIsFullscreen(!!document.fullscreenElement);
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () =>
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  useEffect(() => {
-    const handleResize = () => {
-      const mobile = window.innerWidth < 640;
-      setIsMobile(mobile);
-      if (!isFullscreen) setIsOpen(!mobile); // Collapse sidebar on small screens if not fullscreen
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [isFullscreen]);
-
   return (
     <>
-      {/* Floating reopen button (for all modes) */}
+      {/* Floating Toggle Button */}
       {!isOpen && (
-        <div
-          onClick={() => setIsOpen(true)}
-          className="fixed top-4 left-4 z-50 bg-black/80 text-white px-3 py-2 rounded-full cursor-pointer hover:bg-black/90 transition flex items-center gap-2 shadow-md"
+        <button
+          onClick={toggleOpen}
+          className="fixed top-3 left-3 z-50 bg-black/80 text-white px-2 py-1 rounded-full hover:bg-black/90 transition flex items-center gap-1 sm:gap-2 shadow-md"
         >
-          <div className="bg-cyan-300 p-2 rounded-full">
-            <Building2 className="text-black w-5 h-5" />
+          <div className="bg-cyan-300 p-1 sm:p-2 rounded-full">
+            <Building2 className="text-black w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="bg-white p-1 rounded-full">
-            <ChevronRight className="text-black w-4 h-4" />
+            <ChevronRight className="text-black w-3 h-3 sm:w-4 sm:h-4" />
           </div>
-        </div>
+        </button>
       )}
 
       {/* Sidebar */}
       {isOpen && (
-        <div
-          className={`fixed top-4 left-4 bottom-4 z-40 bg-black/70 backdrop-blur-md text-white p-4 
-          rounded-3xl shadow-xl transition-all duration-300 flex flex-col justify-between w-56`}
+        <aside
+          className={`fixed top-3 left-3 bottom-3 z-40 bg-black/70 backdrop-blur-md text-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-xl transition-all duration-300 flex flex-col 
+            ${isMobile ? "w-36" : "w-48 lg:w-56"}`}
         >
-          <div>
-            {/* Logo & Collapse Button */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <div className="bg-cyan-300 p-2 rounded-full">
-                  <Building2 className="text-black w-5 h-5" />
-                </div>
-                <span className="text-sm font-semibold">Aurora Visuals</span>
+          {/* Header with logo and close button */}
+          <div className="flex items-center justify-between mb-2 sm:mb-4">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="bg-cyan-300 p-1 sm:p-2 rounded-full">
+                <Building2 className="text-black w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <div
-                onClick={() => setIsOpen(false)}
-                className="hidden sm:block ml-auto bg-white text-black rounded-full p-1 cursor-pointer"
-              >
-                <ChevronLeft size={16} />
-              </div>
+              <span className="text-[10px] sm:text-sm font-semibold">
+                Aurora Visuals
+              </span>
             </div>
+            <button
+              onClick={toggleOpen}
+              className="ml-auto bg-white text-black rounded-full p-1"
+            >
+              <ChevronLeft size={isMobile ? 14 : 16} />
+            </button>
+          </div>
 
-            {/* Menu Items */}
-            <nav className="flex flex-col gap-2">
+          {/* Scrollable Menu Section */}
+          <div className="flex-1 overflow-y-auto pr-1 mt-2 sm:mt-3">
+            <nav className="flex flex-col gap-1 sm:gap-2">
               {menuItems.map((item) => (
                 <SidebarItem
                   key={item.label}
@@ -109,40 +107,38 @@ export default function Sidebar({ activeTab, setActiveTab, contentRef }) {
                   active={activeTab === item.label}
                   onClick={() => {
                     setActiveTab(item.label);
-                    if (item.label === "Preview") {
-                      enterFullscreen();
-                    } else if (isMobile) {
-                      setIsOpen(false);
-                    }
+                    if (isMobile) toggleOpen();
                   }}
-                  isOpen={isOpen}
+                  isMobile={isMobile}
                 />
               ))}
             </nav>
           </div>
 
-          {/* Logout */}
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-[#1a1a1a] cursor-pointer">
-            <LogOut className="w-5 h-5" />
-            <span className="text-sm">Logout</span>
-            <span className="w-2 h-2 bg-red-600 rounded-full ml-auto mr-2" />
+          {/* Fixed Logout at Bottom */}
+          <div className="mt-3 border-t border-white/20 pt-2 sm:pt-3">
+            <div className="flex items-center gap-2 p-2 rounded-lg hover:bg-[#1a1a1a] cursor-pointer">
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-[10px] sm:text-sm">Logout</span>
+              <span className="w-2 h-2 bg-red-600 rounded-full ml-auto mr-1 sm:mr-2" />
+            </div>
           </div>
-        </div>
+        </aside>
       )}
     </>
   );
 }
 
-function SidebarItem({ icon, label, active, onClick }) {
+function SidebarItem({ icon, label, active, onClick, isMobile }) {
   return (
     <div
       onClick={onClick}
-      className={`flex items-center p-3 rounded-lg cursor-pointer transition-all ${
+      className={`flex items-center p-2 sm:p-3 rounded-lg cursor-pointer transition-all ${
         active ? "bg-[#292929]" : "hover:bg-[#1a1a1a]"
-      } gap-4`}
+      } gap-2 sm:gap-3`}
     >
-      <div className="w-5 h-5">{icon}</div>
-      <span className="text-sm">{label}</span>
+      <div className="w-4 h-4 sm:w-5 sm:h-5">{icon}</div>
+      <span className="text-[10px] sm:text-sm whitespace-nowrap">{label}</span>
     </div>
   );
 }
